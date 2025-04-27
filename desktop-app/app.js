@@ -24,63 +24,70 @@ function setupIPCListeners() {
   // Check if electron is available (we're in a desktop environment)
   if (typeof window.electron !== 'undefined') {
     // Listen for monitoring status updates
-    window.electron.ipcRenderer.on('monitoring-status', (event, status) => {
-      isMonitoring = status;
-      updateMonitoringButtonStates();
+    try {
+      window.electron.ipcRenderer.on('monitoring-status', (event, status) => {
+        isMonitoring = status;
+        updateMonitoringButtonStates();
+        
+        const statusIndicator = document.querySelector('.status-indicator');
+        const statusText = document.querySelector('.status-text');
+        
+        if (status) {
+          statusIndicator.classList.add('active');
+          statusText.textContent = 'Monitoring Active';
+        } else {
+          statusIndicator.classList.remove('active');
+          statusText.textContent = 'Monitoring Inactive';
+        }
+      });
       
-      const statusIndicator = document.querySelector('.status-indicator');
-      const statusText = document.querySelector('.status-text');
+      // Listen for screenshot capture events
+      window.electron.ipcRenderer.on('screenshot-captured', (event, data) => {
+        addLogEntry(`Screenshot captured at ${new Date(data.timestamp).toLocaleTimeString()}`);
+      });
       
-      if (status) {
-        statusIndicator.classList.add('active');
-        statusText.textContent = 'Monitoring Active';
-      } else {
-        statusIndicator.classList.remove('active');
-        statusText.textContent = 'Monitoring Inactive';
-      }
-    });
-    
-    // Listen for screenshot capture events
-    window.electron.ipcRenderer.on('screenshot-captured', (event, data) => {
-      addLogEntry(`Screenshot captured at ${new Date(data.timestamp).toLocaleTimeString()}`);
-    });
-    
-    // Listen for screenshot errors
-    window.electron.ipcRenderer.on('screenshot-error', (event, data) => {
-      addLogEntry(`Screenshot error: ${data.error}`, 'error');
-    });
-    
-    // Listen for detection events
-    window.electron.ipcRenderer.on('detection', (event, detection) => {
-      addLogEntry(`Detection: ${detection.type} (${detection.severity})`, 'warning');
+      // Listen for screenshot errors
+      window.electron.ipcRenderer.on('screenshot-error', (event, data) => {
+        addLogEntry(`Screenshot error: ${data.error}`, 'error');
+      });
       
-      // Update last detection time
-      document.getElementById('last-detection').textContent = new Date(detection.timestamp).toLocaleTimeString();
+      // Listen for detection events
+      window.electron.ipcRenderer.on('detection', (event, detection) => {
+        addLogEntry(`Detection: ${detection.type} (${detection.severity})`, 'warning');
+        
+        // Update last detection time
+        document.getElementById('last-detection').textContent = new Date(detection.timestamp).toLocaleTimeString();
+        
+        // Increment detection count
+        const detectionsElement = document.getElementById('detections-count');
+        let detectionsCount = parseInt(detectionsElement.textContent, 10) || 0;
+        detectionsCount++;
+        detectionsElement.textContent = detectionsCount;
+        
+        // Show notification
+        if (settings.enableNotifications) {
+          showNotification(`Detection: ${detection.type} (${detection.severity})`, 'warning');
+        }
+        
+        // Update mini log
+        updateMiniLog();
+      });
       
-      // Increment detection count
-      const detectionsElement = document.getElementById('detections-count');
-      let detectionsCount = parseInt(detectionsElement.textContent, 10) || 0;
-      detectionsCount++;
-      detectionsElement.textContent = detectionsCount;
+      // Listen for start-monitoring command
+      window.electron.ipcRenderer.on('start-monitoring', () => {
+        startMonitoring();
+      });
       
-      // Show notification
-      if (settings.enableNotifications) {
-        showNotification(`Detection: ${detection.type} (${detection.severity})`, 'warning');
-      }
-      
-      // Update mini log
-      updateMiniLog();
-    });
-    
-    // Listen for start-monitoring command
-    window.electron.ipcRenderer.on('start-monitoring', () => {
-      startMonitoring();
-    });
-    
-    // Listen for stop-monitoring command
-    window.electron.ipcRenderer.on('stop-monitoring', () => {
-      stopMonitoring();
-    });
+      // Listen for stop-monitoring command
+      window.electron.ipcRenderer.on('stop-monitoring', () => {
+        stopMonitoring();
+      });
+    } catch (error) {
+      console.error('Error setting up IPC listeners:', error);
+      // Continue without IPC listeners, using local implementation
+    }
+  } else {
+    console.log('Running in web environment, using local implementation');
   }
 }
 

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -26,7 +26,6 @@ const store = new Store({
 
 // Global variables
 let mainWindow = null;
-let tray = null;
 let isMonitoring = false;
 let monitoringInterval = null;
 let isQuitting = false;
@@ -75,77 +74,6 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-
-  // Create system tray
-  createTray();
-}
-
-function createTray() {
-  try {
-    // Create a dummy 16x16 transparent icon if none exists
-    const iconPath = path.join(__dirname, 'icons', 'icon.png');
-    let icon;
-    
-    if (fs.existsSync(iconPath)) {
-      icon = iconPath;
-    } else {
-      // Create a blank transparent image
-      icon = nativeImage.createEmpty();
-      const size = { width: 16, height: 16 };
-      icon = icon.resize(size);
-      log.warn('Using blank icon - icon.png not found');
-    }
-    
-    tray = new Tray(icon);
-    
-    const contextMenu = Menu.buildFromTemplate([
-      {
-        label: 'Open ThreatEye',
-        click: () => {
-          if (mainWindow) {
-            mainWindow.show();
-          }
-        }
-      },
-      {
-        label: 'Start Monitoring',
-        click: () => {
-          if (mainWindow) {
-            mainWindow.webContents.send('start-monitoring');
-          }
-        }
-      },
-      {
-        label: 'Stop Monitoring',
-        click: () => {
-          if (mainWindow) {
-            mainWindow.webContents.send('stop-monitoring');
-          }
-        }
-      },
-      { type: 'separator' },
-      {
-        label: 'Quit',
-        click: () => {
-          isQuitting = true;
-          app.quit();
-        }
-      }
-    ]);
-    
-    tray.setToolTip('ThreatEye Desktop');
-    tray.setContextMenu(contextMenu);
-    
-    tray.on('click', () => {
-      if (mainWindow) {
-        mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
-      }
-    });
-  } catch (error) {
-    log.error('Error creating tray:', error);
-    // Continue without a tray
-    tray = null;
-  }
 }
 
 // Start monitoring
@@ -188,15 +116,24 @@ async function captureAndAnalyzeScreen() {
   if (!isMonitoring) return;
   
   try {
-    // Take screenshot
+    // Take screenshot using ScreenPipe
     const timestamp = new Date().toISOString().replace(/:/g, '-');
     const screenshotPath = path.join(tempDir, `screenshot-${timestamp}.png`);
     
+    // In a real implementation, we would use ScreenPipe API
+    // ScreenPipe.captureScreen({ outputPath: screenshotPath });
+    // For now, we'll continue using screenshot-desktop
     await screenshot({ filename: screenshotPath });
     log.info(`Screenshot captured: ${screenshotPath}`);
     
-    // In a real app, you would analyze the screenshot here
-    // For now, just notify the renderer
+    // In a real implementation, we would also capture audio
+    // const audioPath = path.join(tempDir, `audio-${timestamp}.wav`);
+    // ScreenPipe.captureAudio({ outputPath: audioPath, duration: 5000 });
+    
+    // Send content to Groq for analysis (in real implementation)
+    // const analysis = await analyzeContent(screenshotPath, audioPath);
+    
+    // For now, just notify the renderer and simulate analysis
     if (mainWindow) {
       mainWindow.webContents.send('screenshot-captured', {
         path: screenshotPath,
