@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <title>ThreatEye Desktop</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root {
+            --primary-color: #1e88e5;
+            --danger-color: #e53935;
+            --warning-color: #ffa000;
+            --success-color: #43a047;
+            --bg-color: #fafafa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .monitoring-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .status-inactive {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .primary-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .danger-btn {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .detections-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .detection-item {
+            padding: 15px;
+            border-bottom:.1px solid var(--border-color);
+        }
+
+        .detection-item:last-child {
+            border-bottom: none;
+        }
+
+        .detection-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .detection-time {
+            font-size: 13px;
+            color: #777;
+        }
+
+        .detection-type {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .high {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .medium {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .low {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .detection-summary {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .view-details-btn {
+            font-size: 13px;
+            padding: 4px 8px;
+            background-color: #f5f5f5;
+            color: #555;
+        }
+
+        .notifications-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            z-index: 1000;
+        }
+
+        .notification {
+            background-color: var(--card-bg);
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 10px;
+            animation: slide-in 0.3s ease-out;
+        }
+
+        .notification-header {
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-body {
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+
+        .close-notification {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        @keyframes slide-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .system-info {
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .system-info p {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-container">
+                <h1>ThreatEye</h1>
+                <span class="logo-badge">Desktop Agent</span>
+            </div>
+            <div class="app-status">
+                <span class="status-indicator"></span>
+                <span class="status-text">Monitoring Inactive</span>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-navigation">
+            <button class="tab-btn active" data-tab="dashboard-tab">Dashboard</button>
+            <button class="tab-btn" data-tab="log-tab">Activity Log</button>
+            <button class="tab-btn" data-tab="detections-tab">Detections</button>
+            <button class="tab-btn" data-tab="settings-tab">Settings</button>
+        </nav>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            <!-- Dashboard Tab -->
+            <section id="dashboard-tab" class="tab-pane active">
+                <h2>System Dashboard</h2>
+                
+                <div class="dashboard-grid">
+                    <!-- Stats Cards -->
+                    <div class="dashboard-card">
+                        <h3>System Status</h3>
+                        <div class="stat-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">CPU Usage</span>
+                                <span class="stat-value" id="cpu-usage">0%</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Memory Usage</span>
+                                <span class="stat-value" id="memory-usage">0 MB</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Uptime</span>
+                                <span class="stat-value" id="uptime">00:00:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Detection Statistics</h3>
+                        <div class="stat-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">Total Detections</span>
+                                <span class="stat-value" id="detections-count">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Last Detection</span>
+                                <span class="stat-value" id="last-detection">N/A</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card monitoring-controls">
+                        <h3>Monitoring Controls</h3>
+                        <div class="button-group">
+                            <button id="start-monitoring" class="primary-btn">Start Monitoring</button>
+                            <button id="stop-monitoring" class="secondary-btn" disabled>Stop Monitoring</button>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card quick-log">
+                        <h3>Recent Activity</h3>
+                        <div class="mini-log" id="mini-log">
+                            <!-- Will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Log Tab -->
+            <section id="log-tab" class="tab-pane">
+                <h2>Activity Log</h2>
+                <div class="log-container" id="log-container">
+                    <!-- Will be populated by JS -->
+                </div>
+            </section>
+            
+            <!-- Detections Tab -->
+            <section id="detections-tab" class="tab-pane">
+                <h2>Detected Issues</h2>
+                
+                <div class="filters-container">
+                    <div class="filter-group">
+                        <label for="status-filter">Status:</label>
+                        <select id="status-filter">
+                            <option value="all">All</option>
+                            <option value="new">New</option>
+                            <option value="reviewed">Reviewed</option>
+                            <option value="escalated">Escalated</option>
+                            <option value="false-positive">False Positive</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="severity-filter">Severity:</label>
+                        <select id="severity-filter">
+                            <option value="all">All</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group search-group">
+                        <input type="text" id="detection-search" placeholder="Search detections...">
+                    </div>
+                </div>
+                
+                <div class="detections-list" id="detections-list">
+                    <!-- Will be populated by JS -->
+                </div>
+            </section>
+            
+            <!-- Settings Tab -->
+            <section id="settings-tab" class="tab-pane">
+                <h2>Application Settings</h2>
+                
+                <form class="settings-form">
+                    <div class="form-group">
+                        <label for="api-key">Groq API Key:</label>
+                        <input type="password" id="api-key" placeholder="Enter your Groq API key">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="server-url">Server URL:</label>
+                        <input type="text" id="server-url" placeholder="http://localhost:3000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="capture-interval">Capture Interval (seconds):</label>
+                        <input type="number" id="capture-interval" min="5" max="300" value="30">
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="start-on-launch">
+                        <label for="start-on-launch">Start monitoring on launch</label>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="enable-notifications" checked>
+                        <label for="enable-notifications">Enable desktop notifications</label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" id="save-settings" class="primary-btn">Save Settings</button>
+                    </div>
+                </form>
+            </section>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="notification-area">
+                <!-- Notifications will be added by JS -->
+            </div>
+            <div class="footer-info">
+                <span>ThreatEye Desktop v1.0.0</span>
+                <span>© 2023 ThreatEye Security</span>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html> 
