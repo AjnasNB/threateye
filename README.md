@@ -2,6 +2,8 @@
 
 [![Live Presentation](https://img.shields.io/badge/Live_Presentation-View_Demo-brightgreen)](https://threateye.netlify.app/)
 
+![ThreatEye Security System](Threat.png)
+
 ThreatEye is an advanced AI-powered security system that monitors computer screens and audio in real-time to detect and flag extremist content or terror-related activity, providing immediate alerts to security personnel.
 
 ## Problem ThreatEye Solves
